@@ -20,8 +20,8 @@ class RepositoryMock implements PackageRepository {
   final ZoneUnaryCallback<Future<AsyncUploadInfo>, Uri>? startAsyncUploadFun;
   final ZoneUnaryCallback<Future<PackageVersion>, Stream<List<int>>>? uploadFun;
   final ZoneUnaryCallback<Stream<PackageVersion>, String>? versionsFun;
-  final ZoneBinaryCallback<Future?, String, String>? addUploaderFun;
-  final ZoneBinaryCallback<Future?, String, String>? removeUploaderFun;
+  final ZoneBinaryCallback<Future, String, String>? addUploaderFun;
+  final ZoneBinaryCallback<Future, String, String>? removeUploaderFun;
 
   RepositoryMock(
       {this.downloadFun,
@@ -86,19 +86,11 @@ class RepositoryMock implements PackageRepository {
     yield* versionsFun!(package);
   }
 
-  Future addUploader(String package, String userEmail) {
-    if (addUploaderFun != null) {
-      return addUploaderFun!(package, userEmail).then((value) => value!);
-    }
-    throw 'addUploader';
-  }
+  Future addUploader(String package, String userEmail) =>
+      addUploaderFun!(package, userEmail);
 
-  Future removeUploader(String package, String userEmail) {
-    if (removeUploaderFun != null) {
-      return removeUploaderFun!(package, userEmail).then((value) => value!);
-    }
-    throw 'removeUploader';
-  }
+  Future removeUploader(String package, String userEmail) =>
+      removeUploaderFun!(package, userEmail);
 }
 
 class PackageCacheMock implements PackageCache {
@@ -108,10 +100,7 @@ class PackageCacheMock implements PackageCache {
 
   PackageCacheMock({this.getFun, this.setFun, this.invalidateFun});
 
-  Future<List<int>?> getPackageData(String package) async {
-    if (getFun != null) return getFun!(package);
-    throw 'no get function';
-  }
+  Future<List<int>?> getPackageData(String package) async => getFun!(package);
 
   Future setPackageData(String package, List<int> data) async {
     if (setFun != null) return setFun!(package, data);
@@ -315,7 +304,8 @@ void main() {
           var server = ShelfPubServer(mock);
           var request = getRequest('/packages/analyzer/versions/0.1.0.tar.gz');
           var response = await server.requestHandler(request);
-          var body = await response.read().fold([], (dynamic b, d) => b..addAll(d));
+          var body =
+              await response.read().fold([], (dynamic b, d) => b..addAll(d));
 
           expect(response.statusCode, equals(200));
           expect(body, equals([1, 2, 3]));
@@ -413,7 +403,8 @@ void main() {
           var mock = RepositoryMock(
               supportsUpload: true,
               uploadFun: (Stream<List<int>> stream) {
-                return stream.fold([], (dynamic b, d) => b..addAll(d)).then((d) {
+                return stream
+                    .fold([], (dynamic b, d) => b..addAll(d)).then((d) {
                   expect(d, equals(tarballBytes));
                   return PackageVersion('foobar', '0.1.0', '');
                 });
@@ -466,9 +457,7 @@ void main() {
             getUri('/api/packages/versions/newUploadFinish?error=abc');
         var mock = RepositoryMock(
             supportsUpload: true,
-            uploadFun: (Stream<List<int>> stream) async {
-              throw 'abc';
-            } as Future<PackageVersion> Function(Stream<List<int>>)?);
+            uploadFun: (Stream<List<int>> stream) async => throw 'abc');
         var server = ShelfPubServer(mock);
 
         // Start upload - would happen here.
@@ -519,10 +508,9 @@ void main() {
         test('success', () async {
           var mock = RepositoryMock(
               supportsUploaders: true,
-              addUploaderFun: expectAsync2((package, user) {
+              addUploaderFun: expectAsync2((package, user) async {
                 expect(package, equals('pkg'));
                 expect(user, equals('hans'));
-                return null;
               }));
 
           var server = ShelfPubServer(mock);
@@ -576,10 +564,9 @@ void main() {
         test('success', () async {
           var mock = RepositoryMock(
               supportsUploaders: true,
-              removeUploaderFun: expectAsync2((package, user) {
+              removeUploaderFun: expectAsync2((package, user) async {
                 expect(package, equals('pkg'));
                 expect(user, equals('hans'));
-                return null;
               }));
 
           var server = ShelfPubServer(mock);

@@ -19,14 +19,8 @@ class PackageVersion {
   /// The pubspec yaml file of the package
   final String pubspecYaml;
 
-  Version? _cached;
-
   /// The version of the package as a [Version] object.
-  Version get version {
-    if (_cached != null) return _cached!;
-    _cached = Version.parse(versionString);
-    return _cached!;
-  }
+  late final Version version = Version.parse(versionString);
 
   PackageVersion(this.packageName, this.versionString, this.pubspecYaml);
 

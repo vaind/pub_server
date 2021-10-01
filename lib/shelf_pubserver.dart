@@ -519,7 +519,7 @@ class ShelfPubServer {
 abstract class PackageCache {
   Future setPackageData(String package, List<int> data);
 
-  Future<List<int>> getPackageData(String package);
+  Future<List<int>?> getPackageData(String package);
 
   Future invalidatePackageData(String package);
 }
