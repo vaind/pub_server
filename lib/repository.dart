@@ -19,13 +19,13 @@ class PackageVersion {
   /// The pubspec yaml file of the package
   final String pubspecYaml;
 
-  Version _cached;
+  Version? _cached;
 
   /// The version of the package as a [Version] object.
   Version get version {
-    if (_cached != null) return _cached;
+    if (_cached != null) return _cached!;
     _cached = Version.parse(versionString);
-    return _cached;
+    return _cached!;
   }
 
   PackageVersion(this.packageName, this.versionString, this.pubspecYaml);
@@ -121,7 +121,7 @@ abstract class PackageRepository {
   Stream<PackageVersion> versions(String package);
 
   /// Whether the [version] of [package] exists.
-  Future<PackageVersion> lookupVersion(String package, String version);
+  Future<PackageVersion?> lookupVersion(String package, String version);
 
   /// Whether this package repository supports uploading packages.
   bool get supportsUpload => false;
